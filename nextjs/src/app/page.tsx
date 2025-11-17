@@ -3,6 +3,10 @@ import { redis } from '@/lib/redis';
 import { healthChecks } from '@/db/schema';
 import { sql } from 'drizzle-orm';
 
+// Force dynamic rendering - don't prerender at build time
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 async function testConnections() {
   const results = {
     postgres: { status: 'unknown', message: '', details: {} },
