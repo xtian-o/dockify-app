@@ -10,6 +10,9 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
+// Force Node.js runtime for database access
+export const runtime = "nodejs";
+
 export async function POST(req: NextRequest) {
   try {
     const { email } = await req.json();

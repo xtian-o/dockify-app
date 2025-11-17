@@ -21,7 +21,6 @@ import {
   sessions,
   verificationTokens,
 } from "@/db/schema";
-import { redis } from "@/lib/redis";
 
 /**
  * Module augmentation for Auth.js types
@@ -207,6 +206,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           }
 
           // Save token in Redis for client-side verification (TTL: 10 minutes)
+          // Lazy import redis to avoid Edge Runtime compatibility issues
+          const { redis } = await import("@/lib/redis");
           const redisKey = `otp:${email.toLowerCase()}`;
           await redis.setex(redisKey, 600, token); // 600 seconds = 10 minutes
 

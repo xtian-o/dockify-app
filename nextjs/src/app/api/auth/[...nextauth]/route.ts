@@ -16,4 +16,7 @@
 
 import { handlers } from "@/lib/auth";
 
+// Force Node.js runtime for auth routes (required for database, redis, etc.)
+export const runtime = "nodejs";
+
 export const { GET, POST } = handlers;

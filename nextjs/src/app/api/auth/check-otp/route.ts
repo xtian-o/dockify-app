@@ -13,6 +13,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { redis } from "@/lib/redis";
 
+// Force Node.js runtime for Redis access
+export const runtime = "nodejs";
+
 export async function POST(req: NextRequest) {
   try {
     const { email, otp } = await req.json();
