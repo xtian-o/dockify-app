@@ -8,6 +8,13 @@
       "when": 1763353054840,
       "tag": "0000_yellow_thanos",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1763363172325,
+      "tag": "0001_watery_frightful_four",
+      "breakpoints": true
     }
   ]
 }

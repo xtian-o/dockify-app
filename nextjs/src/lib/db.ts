@@ -54,14 +54,8 @@ function getDb() {
   return dbInstance;
 }
 
-export const db = new Proxy({} as ReturnType<typeof drizzle>, {
-  get(_target, prop) {
-    const instance = getDb();
-    if (!instance) {
-      // During build time, return a mock that doesn't fail
-      return () => Promise.resolve();
-    }
-    const value = instance[prop as keyof ReturnType<typeof drizzle>];
-    return typeof value === 'function' ? value.bind(instance) : value;
-  }
-});
+// For Auth.js adapter, we need the raw instance (not proxy)
+// The proxy causes "Unsupported database type (object)" error
+const rawDb = getDb();
+
+export const db = rawDb || drizzle(postgres('postgresql://localhost:5432/postgres'), { schema });

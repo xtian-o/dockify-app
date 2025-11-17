@@ -1,11 +1,12 @@
-import { pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
+/**
+ * Database Schema Index
+ *
+ * Centralized export for all database tables
+ */
 
-// Health check table for testing database connection
-export const healthChecks = pgTable('health_checks', {
-  id: serial('id').primaryKey(),
-  message: text('message').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-});
-
-export type HealthCheck = typeof healthChecks.$inferSelect;
-export type NewHealthCheck = typeof healthChecks.$inferInsert;
+// Export all tables
+export * from "./schema/health-checks";
+export * from "./schema/users";
+export * from "./schema/auth-accounts";
+export * from "./schema/auth-sessions";
+export * from "./schema/auth-verification-tokens";
