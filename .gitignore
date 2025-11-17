@@ -1,0 +1,37 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+
+# Environment variables (contains sensitive credentials)
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Kubernetes secrets (if you generate them locally)
+*-local.yaml
+*.secret.yaml.local
+argocd/repo-secret.yaml
+*/secret.yaml
+
+# Password files (sensitive credentials)
+*PASSWORD*.txt
+*password*.txt
+*.password
+credentials.txt
+CREDENTIALS.md
+argocd/reset-password.sh

@@ -1,0 +1,47 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: dockify-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Dockify Application Project - PostgreSQL, PgBouncer, Redis
+
+  # Source repositories
+  sourceRepos:
+    - 'https://github.com/xtian-o/dockify-app'
+
+  # Destination clusters and namespaces
+  destinations:
+    - namespace: dockify-app
+      server: https://kubernetes.default.svc
+    - namespace: argocd
+      server: https://kubernetes.default.svc
+
+  # Cluster Resource Whitelist
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+
+  # Namespace Resource Whitelist (what can be deployed)
+  namespaceResourceWhitelist:
+    - group: ''
+      kind: Service
+    - group: ''
+      kind: ConfigMap
+    - group: ''
+      kind: Secret
+    - group: ''
+      kind: PersistentVolumeClaim
+    - group: 'apps'
+      kind: Deployment
+    - group: 'apps'
+      kind: StatefulSet
+
+  # Deny certain resources (security)
+  namespaceResourceBlacklist: []
+
+  # Orphaned Resources Monitoring
+  orphanedResources:
+    warn: true

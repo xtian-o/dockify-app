@@ -1,0 +1,46 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dockify-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: dockify-app
+
+  # Source repository
+  source:
+    repoURL: https://github.com/xtian-o/dockify-app
+    targetRevision: main
+    path: .
+    directory:
+      recurse: true
+      exclude: '{argocd/*,README.md,.git*}'
+
+  # Destination cluster
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dockify-app
+
+  # Sync policy
+  syncPolicy:
+    automated:
+      prune: true        # Auto-delete resources removed from git
+      selfHeal: true     # Auto-sync if cluster state differs from git
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # Health assessment
+  ignoreDifferences: []
+
+  # Revision history limit
+  revisionHistoryLimit: 10

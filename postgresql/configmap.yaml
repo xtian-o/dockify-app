@@ -1,0 +1,55 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgresql-config
+  namespace: dockify-app
+  labels:
+    app: postgresql
+data:
+  postgresql.conf: |
+    # Connection Settings
+    max_connections = 500
+    superuser_reserved_connections = 3
+
+    # Memory Settings (optimized for 32GB RAM)
+    shared_buffers = 8GB
+    effective_cache_size = 24GB
+    maintenance_work_mem = 2GB
+    work_mem = 64MB
+
+    # Checkpoint Settings
+    checkpoint_completion_target = 0.9
+    wal_buffers = 16MB
+    default_statistics_target = 100
+    random_page_cost = 1.1
+    effective_io_concurrency = 200
+
+    # Write Ahead Log
+    wal_level = replica
+    max_wal_senders = 10
+    max_replication_slots = 10
+
+    # Query Tuning
+    max_parallel_workers_per_gather = 4
+    max_parallel_workers = 8
+    max_worker_processes = 8
+
+    # Logging
+    logging_collector = on
+    log_directory = 'log'
+    log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
+    log_rotation_age = 1d
+    log_rotation_size = 100MB
+    log_line_prefix = '%t [%p]: user=%u,db=%d,app=%a,client=%h '
+    log_checkpoints = on
+    log_connections = on
+    log_disconnections = on
+    log_duration = off
+    log_lock_waits = on
+    log_statement = 'ddl'
+    log_temp_files = 0
+
+    # Autovacuum
+    autovacuum = on
+    autovacuum_max_workers = 3
+    autovacuum_naptime = 10s
