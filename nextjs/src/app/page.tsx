@@ -93,7 +93,7 @@ export default async function Home() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-8">
       <main className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">🚀 Dockify App</h1>
+          <h1 className="text-4xl font-bold mb-2">🚀 Dockify App v:1</h1>
           <p className="text-gray-400">Next.js 16 + Bun + Drizzle ORM + Redis + PgBouncer</p>
         </div>
 
