@@ -39,30 +39,24 @@ export async function applyManifests(
     const results: string[] = [];
 
     for (const manifest of manifests) {
+      const obj = manifest as k8s.KubernetesObject;
       try {
-        // Apply each manifest
-        const response = await client.patch(
-          manifest as k8s.KubernetesObject,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          {
-            headers: {
-              "Content-Type": "application/apply-patch+yaml",
-            },
+        // Try to create the resource
+        await client.create(obj);
+        results.push(`Created: ${obj.kind}/${obj.metadata?.name}`);
+      } catch (error: any) {
+        // If resource already exists, try to replace/update it
+        if (error?.statusCode === 409) {
+          try {
+            await client.replace(obj);
+            results.push(`Updated: ${obj.kind}/${obj.metadata?.name}`);
+          } catch (replaceError) {
+            console.error("Failed to update resource:", replaceError);
+            throw replaceError;
           }
-        );
-
-        results.push(`Applied: ${response.body.kind}/${response.body.metadata?.name}`);
-      } catch (error) {
-        // If resource doesn't exist, create it
-        try {
-          const response = await client.create(manifest as k8s.KubernetesObject);
-          results.push(`Created: ${response.body.kind}/${response.body.metadata?.name}`);
-        } catch (createError) {
-          console.error("Failed to create resource:", createError);
-          throw createError;
+        } else {
+          console.error("Failed to create resource:", error);
+          throw error;
         }
       }
     }
@@ -96,8 +90,7 @@ export async function getDeploymentStatus(
     const kc = getKubeConfig();
     const appsApi = kc.makeApiClient(k8s.AppsV1Api);
 
-    const response = await appsApi.readNamespacedDeployment(name, namespace);
-    const deployment = response.body;
+    const deployment = await appsApi.readNamespacedDeployment({ name, namespace });
     const status = deployment.status;
 
     return {
@@ -126,7 +119,7 @@ export async function deleteNamespace(
     const kc = getKubeConfig();
     const coreApi = kc.makeApiClient(k8s.CoreV1Api);
 
-    await coreApi.deleteNamespace(namespace);
+    await coreApi.deleteNamespace({ name: namespace });
 
     return { success: true };
   } catch (error) {
