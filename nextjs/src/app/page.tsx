@@ -2,7 +2,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white flex items-center justify-center p-8">
       <main className="text-center">
-        <h1 className="text-6xl font-bold mb-8">🚀 Dockify App v:1</h1>
+        <h1 className="text-6xl font-bold mb-8">🚀 Dockify App</h1>
 
         <div className="bg-gray-800/50 backdrop-blur rounded-lg p-8 border border-gray-700 inline-block">
           <div className="space-y-4">
