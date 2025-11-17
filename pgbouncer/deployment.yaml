@@ -24,44 +24,37 @@ spec:
     spec:
       containers:
       - name: pgbouncer
-        image: bitnami/pgbouncer:latest
+        image: pgbouncer/pgbouncer:1.15.0
         imagePullPolicy: IfNotPresent
         ports:
         - name: pgbouncer
           containerPort: 6432
           protocol: TCP
         env:
-        - name: POSTGRESQL_HOST
+        - name: DATABASES_HOST
           value: "postgresql-service.dockify-app.svc.cluster.local"
-        - name: POSTGRESQL_PORT
+        - name: DATABASES_PORT
           value: "5432"
-        - name: POSTGRESQL_DATABASE
-          valueFrom:
-            secretKeyRef:
-              name: postgresql-secret
-              key: POSTGRES_DB
-        - name: POSTGRESQL_USERNAME
+        - name: DATABASES_USER
           valueFrom:
             secretKeyRef:
               name: postgresql-secret
               key: POSTGRES_USER
-        - name: POSTGRESQL_PASSWORD
+        - name: DATABASES_PASSWORD
           valueFrom:
             secretKeyRef:
               name: postgresql-secret
               key: POSTGRES_PASSWORD
-        - name: PGBOUNCER_PORT
-          value: "6432"
-        - name: PGBOUNCER_DATABASE
+        - name: DATABASES_DBNAME
           valueFrom:
             secretKeyRef:
               name: postgresql-secret
               key: POSTGRES_DB
-        - name: PGBOUNCER_POOL_MODE
+        - name: POOL_MODE
           value: "transaction"
-        - name: PGBOUNCER_MAX_CLIENT_CONN
+        - name: MAX_CLIENT_CONN
           value: "1000"
-        - name: PGBOUNCER_DEFAULT_POOL_SIZE
+        - name: DEFAULT_POOL_SIZE
           value: "25"
         resources:
           requests:
