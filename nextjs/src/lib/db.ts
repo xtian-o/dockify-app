@@ -4,6 +4,18 @@ import * as schema from '@/db/schema';
 
 let dbInstance: ReturnType<typeof drizzle> | null = null;
 
+// Parse PostgreSQL URL to config object (avoids url.parse() deprecation warning)
+function parsePostgresUrl(urlString: string) {
+  const url = new URL(urlString);
+  return {
+    host: url.hostname,
+    port: parseInt(url.port) || 5432,
+    database: url.pathname.slice(1), // Remove leading /
+    username: url.username,
+    password: url.password,
+  };
+}
+
 function getDb() {
   // Skip DB initialization during Next.js build phase
   if (typeof window === 'undefined' && process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
@@ -15,9 +27,12 @@ function getDb() {
     const connectionString = process.env.DATABASE_URL || 'postgresql://localhost:5432/postgres';
 
     try {
+      // Parse URL using modern WHATWG URL API instead of deprecated url.parse()
+      const config = parsePostgresUrl(connectionString);
+
       // Configure postgres client for PgBouncer
-      // Fix for postgres-js URL parsing issue - add explicit onparameter callback
-      const client = postgres(connectionString, {
+      const client = postgres({
+        ...config,
         prepare: false,
         max: 1, // Important for PgBouncer transaction mode
         idle_timeout: 20,

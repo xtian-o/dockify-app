@@ -2,6 +2,16 @@ import Redis from 'ioredis';
 
 let redisClient: Redis | null = null;
 
+// Parse Redis URL to config object (avoids url.parse() deprecation warning)
+function parseRedisUrl(urlString: string) {
+  const url = new URL(urlString);
+  return {
+    host: url.hostname,
+    port: parseInt(url.port) || 6379,
+    password: url.password || undefined,
+  };
+}
+
 function getRedisClient() {
   // Only initialize at runtime, not at build time
   if (typeof window === 'undefined' && process.env.NODE_ENV === 'production' && !process.env.REDIS_URL) {
@@ -12,7 +22,11 @@ function getRedisClient() {
   if (!redisClient) {
     const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 
-    redisClient = new Redis(redisUrl, {
+    // Parse URL using modern WHATWG URL API instead of deprecated url.parse()
+    const config = parseRedisUrl(redisUrl);
+
+    redisClient = new Redis({
+      ...config,
       maxRetriesPerRequest: 3,
       enableReadyCheck: true,
       lazyConnect: true, // Use lazy connect to defer connection until first command
