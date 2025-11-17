@@ -1,8 +1,8 @@
 # Multi-stage Dockerfile for Next.js with Bun
 # Based on official Vercel example
-# Platform: linux/amd64
+# Platform is controlled by GitHub Actions workflow (linux/amd64)
 
-FROM --platform=linux/amd64 oven/bun:1 AS base
+FROM oven/bun:1 AS base
 
 WORKDIR /app
 
