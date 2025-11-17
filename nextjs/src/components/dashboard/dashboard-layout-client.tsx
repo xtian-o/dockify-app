@@ -24,7 +24,7 @@ export function DashboardLayoutClient({
 
   return (
     <TooltipProvider>
-      <div className="flex h-screen overflow-x-visible overflow-y-hidden bg-background">
+      <div className="flex h-screen overflow-x-visible overflow-y-hidden">
         {/* Sidebar - Full Height */}
         <DashboardSidebar collapsed={sidebarCollapsed} />
 

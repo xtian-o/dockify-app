@@ -1,7 +1,5 @@
 import type { IconType } from "react-icons";
 import {
-  MdAdminPanelSettings,
-  MdDashboard,
   MdLogout,
   MdPerson,
   MdSettings,
@@ -39,22 +37,6 @@ export interface UserMenuItemConfig {
  * Add new items here to automatically include them in the menu.
  */
 export const userMenuConfig: UserMenuItemConfig[] = [
-  {
-    id: "staff-area",
-    label: "Staff Area",
-    icon: MdAdminPanelSettings,
-    href: "/staff",
-    adminOnly: true,
-    showOnPath: "/dashboard",
-  },
-  {
-    id: "client-area",
-    label: "Client Area",
-    icon: MdDashboard,
-    href: "/dashboard",
-    adminOnly: true,
-    showOnPath: "/staff",
-  },
   {
     id: "profile",
     label: "Profile",

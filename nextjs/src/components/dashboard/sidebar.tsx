@@ -5,11 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
-  MdAdminPanelSettings,
+  MdApps,
   MdChevronRight,
   MdDashboard,
   MdNewReleases,
-  MdPeople,
 } from "react-icons/md";
 import Logo from "@/components/common/logo";
 import { UserMenu } from "@/components/dashboard/_components";
@@ -25,16 +24,10 @@ const navigation = [
     adminOnly: false,
   },
   {
-    name: "Users",
-    href: "/dashboard/users",
-    icon: MdPeople,
+    name: "App Catalog",
+    href: "/dashboard/apps",
+    icon: MdApps,
     adminOnly: false,
-  },
-  {
-    name: "Staff",
-    href: "/staff",
-    icon: MdAdminPanelSettings,
-    adminOnly: true,
   },
 ];
 
@@ -181,7 +174,7 @@ export function DashboardSidebar({ collapsed = false }: DashboardSidebarProps) {
               BETA
             </span>
             <div className="flex h-full w-5 items-center justify-center bg-orange-500/90">
-              <MdNewReleases className="h-2.5 w-2.5 text-white" />
+              <MdNewReleases className="h-3 w-3 text-white" />
             </div>
           </div>
         )}
