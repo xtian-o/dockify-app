@@ -45,14 +45,31 @@ spec:
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:
-              name: nextjs-secrets
+              name: dockify-app-secrets
               key: DATABASE_URL
         # Redis connection from Kubernetes Secret
         - name: REDIS_URL
           valueFrom:
             secretKeyRef:
-              name: nextjs-secrets
+              name: dockify-app-secrets
               key: REDIS_URL
+        # NextAuth configuration
+        - name: AUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: dockify-app-secrets
+              key: AUTH_SECRET
+        - name: NEXTAUTH_URL
+          valueFrom:
+            secretKeyRef:
+              name: dockify-app-secrets
+              key: NEXTAUTH_URL
+        # Email provider (Resend)
+        - name: AUTH_RESEND_KEY
+          valueFrom:
+            secretKeyRef:
+              name: dockify-app-secrets
+              key: AUTH_RESEND_KEY
         resources:
           requests:
             cpu: "500m"
