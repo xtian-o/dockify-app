@@ -44,4 +44,8 @@ spec:
 
   # Orphaned Resources Monitoring
   orphanedResources:
-    warn: true
+    warn: false
+    ignore:
+    - group: ""
+      kind: Secret
+      name: "wildcard-*"
