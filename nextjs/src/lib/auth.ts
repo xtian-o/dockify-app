@@ -231,9 +231,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
   // ==================== SESSION ====================
   session: {
-    strategy: "database", // Database sessions (not JWT)
+    strategy: "jwt", // JWT sessions (Edge Runtime compatible)
     maxAge: 30 * 24 * 60 * 60, // 30 days
     updateAge: 24 * 60 * 60, // Update session every 24 hours
+  },
+
+  // JWT configuration
+  jwt: {
+    maxAge: 30 * 24 * 60 * 60, // 30 days (same as session)
   },
 
   // ==================== COOKIES ====================
