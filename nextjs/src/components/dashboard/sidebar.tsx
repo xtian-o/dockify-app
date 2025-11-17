@@ -173,8 +173,8 @@ export function DashboardSidebar({ collapsed = false }: DashboardSidebarProps) {
             <span className="flex items-center px-1.5 text-[9px] font-extrabold tracking-wider uppercase text-primary/80">
               BETA
             </span>
-            <div className="flex h-full w-5 items-center justify-center bg-orange-500/90">
-              <MdNewReleases className="h-3 w-3 text-white" />
+            <div className="flex h-full w-6 items-center justify-center bg-orange-500/90">
+              <MdNewReleases className="h-3.5 w-3.5 text-white" />
             </div>
           </div>
         )}
