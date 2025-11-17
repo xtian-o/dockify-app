@@ -5,7 +5,7 @@ metadata:
   namespace: dockify-app
   labels:
     app: pgbouncer
-    version: "1.25.0"
+    version: "latest"
 spec:
   replicas: 1
   strategy:
@@ -20,11 +20,11 @@ spec:
     metadata:
       labels:
         app: pgbouncer
-        version: "1.25.0"
+        version: "latest"
     spec:
       containers:
       - name: pgbouncer
-        image: pgbouncer/pgbouncer:1.25.0
+        image: pgbouncer/pgbouncer:latest
         imagePullPolicy: IfNotPresent
         ports:
         - name: pgbouncer
