@@ -15,11 +15,8 @@ function getKubeConfig() {
   } catch (error) {
     try {
       // If not found, try in-cluster config (works in production pods)
+      // NODE_TLS_REJECT_UNAUTHORIZED=0 is set in deployment.yaml to trust self-signed certs
       kc.loadFromCluster();
-
-      // For in-cluster connections, disable TLS certificate verification
-      // This is safe because we're within the cluster's internal network
-      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
     } catch (clusterError) {
       console.error("Failed to load kubeconfig:", error);
       console.error("Failed to load in-cluster config:", clusterError);

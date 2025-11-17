@@ -42,6 +42,9 @@ spec:
           value: "0.0.0.0"
         - name: GIT_COMMIT_SHA
           value: "210880c5c55e4161ec2aba9e4f2bcd7c1514866b"  # Updated by GitHub Actions to force pod restart
+        # Disable TLS verification for in-cluster K8s API calls
+        - name: NODE_TLS_REJECT_UNAUTHORIZED
+          value: "0"
         # Database connection from Kubernetes Secret
         - name: DATABASE_URL
           valueFrom:
