@@ -171,6 +171,18 @@ export default async function Home() {
               <span className="text-gray-400">Deployed on:</span>
               <span className="ml-2 text-orange-400">Kubernetes</span>
             </div>
+            <div>
+              <span className="text-gray-400">Version:</span>
+              <span className="ml-2 text-cyan-400 font-mono">
+                {process.env.GIT_COMMIT_SHA?.substring(0, 7) || 'unknown'}
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-400">Image Tag:</span>
+              <span className="ml-2 text-yellow-400 font-mono">
+                main-{process.env.GIT_COMMIT_SHA?.substring(0, 7) || 'unknown'}
+              </span>
+            </div>
           </div>
         </div>
 
