@@ -40,7 +40,7 @@ spec:
         - name: HOSTNAME
           value: "0.0.0.0"
         - name: GIT_COMMIT_SHA
-          value: "4600927f2e6aadda1802ef77189a5ac030857c28"  # Updated by GitHub Actions to force pod restart
+          value: "7619d43c4c2f9336901db3dd71120dde9cbe5233"  # Updated by GitHub Actions to force pod restart
         # Database connection from Kubernetes Secret
         - name: DATABASE_URL
           valueFrom:
