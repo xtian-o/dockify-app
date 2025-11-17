@@ -22,7 +22,7 @@ spec:
         app: nextjs
         version: "16.0.3"
       annotations:
-        commit-sha: "349c285e5854b4d3dd30e8c313f41bf3b52083ed"  # Updated by GitHub Actions on each push
+        commit-sha: "d00408659a67a062d3a4dd5c2141ba7287bf1707"  # Updated by GitHub Actions on each push
     spec:
       containers:
       - name: nextjs
@@ -40,7 +40,7 @@ spec:
         - name: HOSTNAME
           value: "0.0.0.0"
         - name: GIT_COMMIT_SHA
-          value: "initial"  # Updated by GitHub Actions to force pod restart
+          value: "d00408659a67a062d3a4dd5c2141ba7287bf1707"  # Updated by GitHub Actions to force pod restart
         # Database connection from Kubernetes Secret
         - name: DATABASE_URL
           valueFrom:
