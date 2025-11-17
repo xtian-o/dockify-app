@@ -35,3 +35,4 @@ argocd/repo-secret.yaml
 credentials.txt
 CREDENTIALS.md
 argocd/reset-password.sh
+nextjs/*secret*.yaml

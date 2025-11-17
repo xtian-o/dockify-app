@@ -15,13 +15,16 @@ async function testConnections() {
     const result = await db.execute(sql`SELECT 1 as test, version() as pg_version`);
 
     const timestamp = new Date().toISOString();
+    const firstRow = Array.isArray(result) ? result[0] : result;
+    const versionStr = (firstRow as any)?.pg_version || 'PostgreSQL 18';
+    const version = typeof versionStr === 'string' ? versionStr.split(' ').slice(0, 2).join(' ') : 'PostgreSQL 18';
 
     results.postgres = {
       status: 'success',
       message: '✅ PostgreSQL connected via PgBouncer',
       details: {
         testQuery: 'SELECT 1',
-        version: result.rows[0]?.pg_version?.split(' ').slice(0, 2).join(' ') || 'PostgreSQL 18',
+        version,
         timestamp,
         connectionPool: 'PgBouncer (transaction mode)',
       },

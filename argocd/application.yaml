@@ -15,7 +15,7 @@ spec:
     path: .
     directory:
       recurse: true
-      exclude: '{argocd/*,README.md,.git*}'
+      exclude: '{argocd/*,README.md,.git*,**/*.json,**/bun.lock,**/src/**,**/public/**,**/.dockerignore,**/.gitignore,**/Dockerfile,**/postcss.config.mjs}'
 
   # Destination cluster
   destination:
