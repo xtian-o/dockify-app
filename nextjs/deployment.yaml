@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextjs
+  namespace: dockify-app
+  labels:
+    app: nextjs
+    version: "16.0.3"
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: nextjs
+  template:
+    metadata:
+      labels:
+        app: nextjs
+        version: "16.0.3"
+    spec:
+      containers:
+      - name: nextjs
+        image: ghcr.io/xtian-o/dockify-app/nextjs:latest
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 3000
+          protocol: TCP
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "3000"
+        - name: HOSTNAME
+          value: "0.0.0.0"
+        # Database connection (PgBouncer recommended)
+        - name: DATABASE_URL
+          value: "postgresql://postgres:VuQrkFje2cN7H5cREEbvVyfadVVSMrk1@pgbouncer-service.dockify-app.svc.cluster.local:6432/dockify"
+        # Redis connection
+        - name: REDIS_URL
+          value: "redis://redis-service.dockify-app.svc.cluster.local:6379"
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+          limits:
+            cpu: "2000m"
+            memory: "2Gi"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3

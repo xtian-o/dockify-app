@@ -1,0 +1,35 @@
+apiVersion: networking.cfargotunnel.com/v1alpha2
+kind: TunnelBinding
+metadata:
+  name: nextjs-main-dockify-app
+  namespace: dockify-app
+spec:
+  clusterTunnel:
+    name: main-dockify-app-tunnel
+  subjects:
+  - kind: Service
+    name: nextjs-service
+    spec:
+      fqdn: main.dockify.app
+      target: http://nextjs-service.dockify-app.svc.cluster.local:3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nextjs-public
+  namespace: dockify-app
+  labels:
+    app: nextjs
+    expose: cloudflare
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: main.dockify.app
+    external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+spec:
+  type: ClusterIP
+  selector:
+    app: nextjs
+  ports:
+  - name: http
+    port: 80
+    targetPort: 3000
+    protocol: TCP
