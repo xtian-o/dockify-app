@@ -1,62 +1,190 @@
-import Image from "next/image";
+import { db } from '@/lib/db';
+import { redis } from '@/lib/redis';
+import { healthChecks } from '@/db/schema';
+import { sql } from 'drizzle-orm';
 
-export default function Home() {
+async function testConnections() {
+  const results = {
+    postgres: { status: 'unknown', message: '', details: {} },
+    redis: { status: 'unknown', message: '', details: {} },
+  };
+
+  // Test PostgreSQL via PgBouncer
+  try {
+    // Create table if not exists
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS health_checks (
+        id SERIAL PRIMARY KEY,
+        message TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )
+    `);
+
+    // Insert test record
+    const [newRecord] = await db
+      .insert(healthChecks)
+      .values({ message: 'Test from Next.js' })
+      .returning();
+
+    // Query back
+    const records = await db.select().from(healthChecks).limit(5);
+
+    results.postgres = {
+      status: 'success',
+      message: '✅ PostgreSQL connected via PgBouncer',
+      details: {
+        latestRecord: newRecord,
+        totalRecords: records.length,
+        recentRecords: records,
+      },
+    };
+  } catch (error) {
+    results.postgres = {
+      status: 'error',
+      message: '❌ PostgreSQL connection failed',
+      details: { error: error instanceof Error ? error.message : String(error) },
+    };
+  }
+
+  // Test Redis
+  try {
+    const timestamp = Date.now();
+    const testKey = `health:${timestamp}`;
+
+    // Set a test value
+    await redis.set(testKey, JSON.stringify({ test: true, timestamp }), 'EX', 60);
+
+    // Get it back
+    const value = await redis.get(testKey);
+    const parsed = value ? JSON.parse(value) : null;
+
+    // Get Redis info
+    const dbSize = await redis.dbsize();
+    const ping = await redis.ping();
+
+    results.redis = {
+      status: 'success',
+      message: '✅ Redis connected',
+      details: {
+        ping,
+        dbSize,
+        testValue: parsed,
+      },
+    };
+  } catch (error) {
+    results.redis = {
+      status: 'error',
+      message: '❌ Redis connection failed',
+      details: { error: error instanceof Error ? error.message : String(error) },
+    };
+  }
+
+  return results;
+}
+
+export default async function Home() {
+  const connectionTests = await testConnections();
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-8">
+      <main className="max-w-4xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold mb-2">🚀 Dockify App</h1>
+          <p className="text-gray-400">Next.js 16 + Bun + Drizzle ORM + Redis</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
+
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* PostgreSQL Status */}
+          <div className="bg-gray-800/50 backdrop-blur rounded-lg p-6 border border-gray-700">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">PostgreSQL</h2>
+              <span
+                className={`px-3 py-1 rounded-full text-sm ${
+                  connectionTests.postgres.status === 'success'
+                    ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                    : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                }`}
+              >
+                {connectionTests.postgres.status}
+              </span>
+            </div>
+            <p className="mb-4">{connectionTests.postgres.message}</p>
+            <div className="bg-gray-900/50 rounded p-4 text-sm">
+              <pre className="overflow-x-auto">
+                {JSON.stringify(connectionTests.postgres.details, null, 2)}
+              </pre>
+            </div>
+            <div className="mt-4 text-xs text-gray-500">
+              <p>📦 Via PgBouncer connection pooler</p>
+              <p>🗄️ PostgreSQL 18 (Debian Trixie)</p>
+            </div>
+          </div>
+
+          {/* Redis Status */}
+          <div className="bg-gray-800/50 backdrop-blur rounded-lg p-6 border border-gray-700">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Redis</h2>
+              <span
+                className={`px-3 py-1 rounded-full text-sm ${
+                  connectionTests.redis.status === 'success'
+                    ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                    : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                }`}
+              >
+                {connectionTests.redis.status}
+              </span>
+            </div>
+            <p className="mb-4">{connectionTests.redis.message}</p>
+            <div className="bg-gray-900/50 rounded p-4 text-sm">
+              <pre className="overflow-x-auto">
+                {JSON.stringify(connectionTests.redis.details, null, 2)}
+              </pre>
+            </div>
+            <div className="mt-4 text-xs text-gray-500">
+              <p>⚡ Redis 8.2-alpine</p>
+              <p>🔄 In-memory data store</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Environment Info */}
+        <div className="mt-6 bg-gray-800/30 rounded-lg p-6 border border-gray-700/50">
+          <h3 className="text-lg font-semibold mb-3">🌍 Environment</h3>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-gray-400">Node ENV:</span>
+              <span className="ml-2 text-green-400">{process.env.NODE_ENV}</span>
+            </div>
+            <div>
+              <span className="text-gray-400">Runtime:</span>
+              <span className="ml-2 text-blue-400">Bun</span>
+            </div>
+            <div>
+              <span className="text-gray-400">Framework:</span>
+              <span className="ml-2 text-purple-400">Next.js 16</span>
+            </div>
+            <div>
+              <span className="text-gray-400">Deployed on:</span>
+              <span className="ml-2 text-orange-400">Kubernetes</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Links */}
+        <div className="mt-6 flex gap-4">
           <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="/api/health"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
+            Health Check API
           </a>
           <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            href="https://github.com/xtian-o/dockify-app"
             target="_blank"
             rel="noopener noreferrer"
+            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
           >
-            Documentation
+            GitHub Repository
           </a>
         </div>
       </main>
