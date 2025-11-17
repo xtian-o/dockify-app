@@ -1,17 +1,18 @@
-apiVersion: networking.cfargotunnel.com/v1alpha2
+apiVersion: networking.cfargotunnel.com/v1alpha1
 kind: TunnelBinding
 metadata:
-  name: nextjs-main-dockify-app
+  name: nextjs-binding
   namespace: dockify-app
-spec:
-  clusterTunnel:
-    name: main-dockify-app-tunnel
-  subjects:
-  - kind: Service
-    name: nextjs-service
-    spec:
-      fqdn: main.dockify.app
-      target: http://nextjs-service.dockify-app.svc.cluster.local:3000
+subjects:
+- kind: Service
+  name: nextjs-service
+  spec:
+    fqdn: main.dockify.app
+    noTlsVerify: false
+    target: http://nextjs-service.dockify-app.svc.cluster.local:3000
+tunnelRef:
+  kind: ClusterTunnel
+  name: main-dockify-app-tunnel
 ---
 apiVersion: v1
 kind: Service
