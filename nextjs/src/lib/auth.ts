@@ -290,15 +290,37 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   // ==================== CALLBACKS ====================
   callbacks: {
     /**
+     * JWT Callback
+     *
+     * This callback is called whenever a JWT is created or updated
+     * We use it to add custom fields to the token
+     */
+    async jwt({ token, user, trigger }) {
+      // On sign in, add user info to token
+      if (user) {
+        token.id = user.id;
+        token.status = user.status;
+        token.emailVerified = user.emailVerified;
+      }
+
+      // On session update, refresh user data from database
+      if (trigger === "update") {
+        // You can fetch fresh user data here if needed
+      }
+
+      return token;
+    },
+
+    /**
      * Session Callback
      *
-     * Adds custom fields to the session object
+     * Adds custom fields to the session object from the JWT token
      */
-    async session({ session, user }) {
-      if (session.user) {
-        session.user.id = user.id;
-        session.user.status = user.status;
-        session.user.emailVerified = user.emailVerified;
+    async session({ session, token }) {
+      if (session.user && token) {
+        session.user.id = token.id as string;
+        session.user.status = token.status as DBUser["status"];
+        session.user.emailVerified = token.emailVerified as Date | null;
       }
       return session;
     },
