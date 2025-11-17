@@ -43,6 +43,7 @@ jobs:
             type=sha,prefix={{branch}}-
 
       - name: Build and push Docker image
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: ./nextjs
@@ -54,18 +55,22 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Image digest
-        run: echo "Image pushed with digest ${{ steps.build.outputs.digest }}"
-
-      - name: Trigger deployment restart
-        env:
-          KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG }}
+      - name: Update deployment with new image digest
         run: |
-          if [ -n "$KUBECONFIG_CONTENT" ]; then
-            echo "$KUBECONFIG_CONTENT" > /tmp/kubeconfig
-            export KUBECONFIG=/tmp/kubeconfig
-            kubectl rollout restart deployment/nextjs -n dockify-app
-            echo "✅ Deployment restarted to pull new image"
+          # Update deployment manifest with commit SHA annotation
+          # This triggers ArgoCD to detect change and sync automatically
+          sed -i "s/commit-sha: \".*\"/commit-sha: \"${{ github.sha }}\"/g" nextjs/deployment.yaml
+          echo "✅ Updated deployment manifest with commit SHA: ${{ github.sha }}"
+
+      - name: Commit and push deployment update
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add nextjs/deployment.yaml
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
           else
-            echo "⚠️ KUBECONFIG secret not set - manual restart required"
+            git commit -m "Update Next.js deployment to ${{ github.sha }}"
+            git push
+            echo "✅ Deployment manifest updated - ArgoCD will sync automatically"
           fi

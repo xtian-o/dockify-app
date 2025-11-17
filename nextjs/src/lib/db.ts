@@ -9,16 +9,25 @@ function getDb() {
     // Only create connection at runtime, not at build time
     const connectionString = process.env.DATABASE_URL || 'postgresql://localhost:5432/postgres';
 
-    // Configure postgres client for PgBouncer
-    const client = postgres(connectionString, {
-      prepare: false,
-      max: 1, // Important for PgBouncer transaction mode
-      idle_timeout: 20,
-      connect_timeout: 10,
-      ssl: false, // PgBouncer doesn't require SSL internally
-    });
+    console.log('[DB] Initializing connection to:', connectionString.replace(/:[^:@]+@/, ':****@'));
 
-    dbInstance = drizzle(client, { schema });
+    try {
+      // Configure postgres client for PgBouncer
+      const client = postgres(connectionString, {
+        prepare: false,
+        max: 1, // Important for PgBouncer transaction mode
+        idle_timeout: 20,
+        connect_timeout: 10,
+        ssl: false, // PgBouncer doesn't require SSL internally
+        onnotice: () => {}, // Suppress notices
+      });
+
+      dbInstance = drizzle(client, { schema });
+      console.log('[DB] Connection initialized successfully');
+    } catch (error) {
+      console.error('[DB] Failed to initialize connection:', error);
+      throw error;
+    }
   }
 
   return dbInstance;

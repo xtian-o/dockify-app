@@ -21,6 +21,8 @@ spec:
       labels:
         app: nextjs
         version: "16.0.3"
+      annotations:
+        commit-sha: "initial"  # Updated by GitHub Actions on each push
     spec:
       containers:
       - name: nextjs

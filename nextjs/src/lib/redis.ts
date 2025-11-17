@@ -6,24 +6,38 @@ function getRedisClient() {
   if (!redisClient) {
     const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 
+    console.log('[Redis] Initializing connection to:', redisUrl);
+
     redisClient = new Redis(redisUrl, {
       maxRetriesPerRequest: 3,
       enableReadyCheck: false,
       lazyConnect: true, // Lazy connect - only when needed
       connectTimeout: 10000,
       retryStrategy(times) {
-        if (times > 3) return null;
+        console.log(`[Redis] Retry attempt ${times}/3`);
+        if (times > 3) {
+          console.log('[Redis] Max retries reached, giving up');
+          return null;
+        }
         const delay = Math.min(times * 50, 2000);
         return delay;
       },
     });
 
     redisClient.on('connect', () => {
-      console.log('✅ Redis connected to:', redisUrl);
+      console.log('[Redis] ✅ Connected successfully to:', redisUrl);
+    });
+
+    redisClient.on('ready', () => {
+      console.log('[Redis] ✅ Ready to accept commands');
     });
 
     redisClient.on('error', (err) => {
-      console.error('❌ Redis error:', err.message);
+      console.error('[Redis] ❌ Error:', err.message);
+    });
+
+    redisClient.on('close', () => {
+      console.log('[Redis] Connection closed');
     });
   }
 
