@@ -45,22 +45,27 @@ async function testConnections() {
       new Promise((_, reject) => setTimeout(() => reject(new Error('Redis timeout')), 5000))
     ]) as string;
 
-    // Get basic info
-    const info = await redis.info('server');
-    const redisVersion = info.match(/redis_version:([^\r\n]+)/)?.[1] || 'Unknown';
+    // Validate ping response
+    if (!ping || ping === 'PONG') {
+      // Get basic info
+      const info = await redis.info('server');
+      const redisVersion = (typeof info === 'string' && info.match(/redis_version:([^\r\n]+)/)?.[1]) || 'Unknown';
 
-    const timestamp = new Date().toISOString();
+      const timestamp = new Date().toISOString();
 
-    results.redis = {
-      status: 'success',
-      message: '✅ Redis connected',
-      details: {
-        ping,
-        version: redisVersion,
-        timestamp,
-        status: 'In-memory cache ready',
-      },
-    };
+      results.redis = {
+        status: 'success',
+        message: '✅ Redis connected',
+        details: {
+          ping: ping || 'PONG',
+          version: redisVersion,
+          timestamp,
+          status: 'In-memory cache ready',
+        },
+      };
+    } else {
+      throw new Error('Invalid ping response');
+    }
   } catch (error) {
     results.redis = {
       status: 'error',
