@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
-import { auth } from "@/lib/auth";
+import { ThemeProvider } from "@/components/common/theme-selector/theme-provider";
 import { SessionProvider } from "@/components/providers/session-provider";
+import { auth } from "@/lib/auth";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -28,18 +29,21 @@ export default async function RootLayout({
   const session = await auth();
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
       >
-        <SessionProvider session={session}>
-          {children}
-          <Toaster position="top-center" richColors expand={true} visibleToasts={5} toastOptions={{
-            style: {
-              zIndex: 999999,
-            },
-          }} />
-        </SessionProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <SessionProvider session={session}>
+            {children}
+            <Toaster position="top-center" richColors expand={true} visibleToasts={5} toastOptions={{
+              style: {
+                zIndex: 999999,
+              },
+            }} />
+          </SessionProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
