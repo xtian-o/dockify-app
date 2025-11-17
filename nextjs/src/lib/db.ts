@@ -5,6 +5,11 @@ import * as schema from '@/db/schema';
 let dbInstance: ReturnType<typeof drizzle> | null = null;
 
 function getDb() {
+  // Skip DB initialization during Next.js build phase
+  if (typeof window === 'undefined' && process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+    return null;
+  }
+
   if (!dbInstance) {
     // Only create connection at runtime, not at build time
     const connectionString = process.env.DATABASE_URL || 'postgresql://localhost:5432/postgres';
@@ -38,7 +43,13 @@ function getDb() {
 }
 
 export const db = new Proxy({} as ReturnType<typeof drizzle>, {
-  get(target, prop) {
-    return getDb()[prop as keyof ReturnType<typeof drizzle>];
+  get(_target, prop) {
+    const instance = getDb();
+    if (!instance) {
+      // During build time, return a mock that doesn't fail
+      return () => Promise.resolve();
+    }
+    const value = instance[prop as keyof ReturnType<typeof drizzle>];
+    return typeof value === 'function' ? value.bind(instance) : value;
   }
 });

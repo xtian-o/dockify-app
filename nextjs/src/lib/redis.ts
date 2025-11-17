@@ -3,6 +3,12 @@ import Redis from 'ioredis';
 let redisClient: Redis | null = null;
 
 function getRedisClient() {
+  // Only initialize at runtime, not at build time
+  if (typeof window === 'undefined' && process.env.NODE_ENV === 'production' && !process.env.REDIS_URL) {
+    // During Next.js build, skip Redis initialization
+    return null;
+  }
+
   if (!redisClient) {
     const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 
@@ -11,7 +17,7 @@ function getRedisClient() {
     redisClient = new Redis(redisUrl, {
       maxRetriesPerRequest: 3,
       enableReadyCheck: true,
-      lazyConnect: false, // Connect immediately to avoid race conditions
+      lazyConnect: true, // Use lazy connect to defer connection until first command
       connectTimeout: 10000,
       retryStrategy(times) {
         console.log(`[Redis] Retry attempt ${times}/3`);
@@ -22,7 +28,6 @@ function getRedisClient() {
         const delay = Math.min(times * 50, 2000);
         return delay;
       },
-      // Keep connection alive
       keepAlive: 30000,
     });
 
@@ -50,10 +55,16 @@ function getRedisClient() {
   return redisClient;
 }
 
-// Export a lazy getter function instead of creating the client immediately
+// Export a lazy Proxy that defers initialization until first use
 export const redis = new Proxy({} as Redis, {
-  get(target, prop) {
-    return getRedisClient()[prop as keyof Redis];
+  get(_target, prop) {
+    const client = getRedisClient();
+    if (!client) {
+      // During build time, return a mock that doesn't fail
+      return () => Promise.resolve();
+    }
+    const value = client[prop as keyof Redis];
+    return typeof value === 'function' ? value.bind(client) : value;
   }
 });
 
