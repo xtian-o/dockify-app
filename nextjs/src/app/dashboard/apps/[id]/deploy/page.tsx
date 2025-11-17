@@ -13,7 +13,7 @@ import {
   MdOpenInNew,
   MdLink,
 } from "react-icons/md";
-import { SiPostgresql } from "react-icons/si";
+import { SiPostgresql, SiRedis } from "react-icons/si";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -41,6 +41,34 @@ export default function DeployAppPage() {
   const router = useRouter();
   const appId = params.id as string;
 
+  // App-specific configuration
+  const appConfig = {
+    postgres: {
+      name: "PostgreSQL",
+      icon: SiPostgresql,
+      color: "bg-blue-500/80",
+      defaultPort: "30432",
+      internalPort: 5432,
+      defaultEnvVars: {
+        POSTGRES_USER: "postgres",
+        POSTGRES_PASSWORD: "",
+        POSTGRES_DB: "postgres",
+      },
+    },
+    redis: {
+      name: "Redis",
+      icon: SiRedis,
+      color: "bg-red-500/80",
+      defaultPort: "30379",
+      internalPort: 6379,
+      defaultEnvVars: {
+        REDIS_PASSWORD: "",
+      },
+    },
+  };
+
+  const currentApp = appConfig[appId as keyof typeof appConfig] || appConfig.postgres;
+
   const [tags, setTags] = useState<DockerTag[]>([]);
   const [loading, setLoading] = useState(true);
   const [deploying, setDeploying] = useState(false);
@@ -59,19 +87,23 @@ export default function DeployAppPage() {
       status: string;
     };
     credentials?: {
-      user: string;
+      user?: string;
       password: string;
-      database: string;
+      database?: string;
     };
   } | null>(null);
   const [selectedTag, setSelectedTag] = useState<string>("");
   const [containerName, setContainerName] = useState("");
-  const [port, setPort] = useState("30432");
+
+  // Initialize port and envVars based on appId to prevent hydration mismatch
+  const [port, setPort] = useState(() => {
+    const config = appConfig[appId as keyof typeof appConfig] || appConfig.postgres;
+    return config.defaultPort;
+  });
   const [pvcSize, setPvcSize] = useState("10");
-  const [envVars, setEnvVars] = useState({
-    POSTGRES_USER: "postgres",
-    POSTGRES_PASSWORD: "",
-    POSTGRES_DB: "postgres",
+  const [envVars, setEnvVars] = useState<Record<string, string>>(() => {
+    const config = appConfig[appId as keyof typeof appConfig] || appConfig.postgres;
+    return config.defaultEnvVars;
   });
 
   const generatePassword = () => {
@@ -86,7 +118,12 @@ export default function DeployAppPage() {
       password += charset[randomBytes[i] % charset.length];
     }
 
-    setEnvVars({ ...envVars, POSTGRES_PASSWORD: password });
+    // Set password based on app type
+    if (appId === "postgres") {
+      setEnvVars({ ...envVars, POSTGRES_PASSWORD: password });
+    } else if (appId === "redis") {
+      setEnvVars({ ...envVars, REDIS_PASSWORD: password });
+    }
   };
 
   const copyToClipboard = (text: string, label?: string) => {
@@ -199,15 +236,15 @@ export default function DeployAppPage() {
         </motion.button>
 
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-md border border-primary/80 bg-blue-500/80">
-            <SiPostgresql className="h-6 w-6 text-white" />
+          <div className={cn("flex h-12 w-12 items-center justify-center rounded-md border border-primary/80", currentApp.color)}>
+            <currentApp.icon className="h-6 w-6 text-white" />
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-primary/80">
-              Deploy PostgreSQL
+              Deploy {currentApp.name}
             </h1>
             <p className="text-sm text-muted-foreground">
-              Configure and deploy your database
+              Configure and deploy your {appId === "postgres" ? "database" : "cache"}
             </p>
           </div>
         </div>
@@ -286,7 +323,8 @@ export default function DeployAppPage() {
                   type="text"
                   value={containerName}
                   onChange={(e) => setContainerName(e.target.value)}
-                  placeholder="my-postgres"
+                  placeholder={`my-${appId}`}
+                  autoComplete="off"
                   className="w-full h-9 px-3 text-xs rounded-md border border-primary/80 border-r-[3px] bg-card shadow-sm text-primary/80 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
@@ -300,6 +338,10 @@ export default function DeployAppPage() {
                   type="text"
                   value={port}
                   onChange={(e) => setPort(e.target.value)}
+                  autoComplete="off"
+                  data-1p-ignore
+                  data-lpignore="true"
+                  data-form-type="other"
                   className="w-full h-9 px-3 text-xs rounded-md border border-primary/80 border-r-[3px] bg-card shadow-sm text-primary/80 focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
@@ -315,6 +357,10 @@ export default function DeployAppPage() {
                   onChange={(e) => setPvcSize(e.target.value)}
                   min="1"
                   max="1000"
+                  autoComplete="off"
+                  data-1p-ignore
+                  data-lpignore="true"
+                  data-form-type="other"
                   className="w-full h-9 px-3 text-xs rounded-md border border-primary/80 border-r-[3px] bg-card shadow-sm text-primary/80 focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
@@ -327,74 +373,121 @@ export default function DeployAppPage() {
               Environment Variables
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-primary/80 mb-2">
-                  POSTGRES_USER
-                </label>
-                <input
-                  type="text"
-                  value={envVars.POSTGRES_USER}
-                  onChange={(e) =>
-                    setEnvVars({ ...envVars, POSTGRES_USER: e.target.value })
-                  }
-                  className="w-full h-9 px-3 text-xs rounded-md border border-primary/80 border-r-[3px] bg-card shadow-sm text-primary/80 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-primary/80 mb-2">
-                  POSTGRES_PASSWORD *
-                </label>
-                <div className="flex gap-2">
+            {appId === "postgres" ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-primary/80 mb-2">
+                    POSTGRES_USER
+                  </label>
                   <input
-                    type="password"
-                    value={envVars.POSTGRES_PASSWORD}
-                    readOnly
-                    placeholder="Click generate button"
-                    className="flex-1 h-9 px-3 text-xs rounded-md border border-primary/80 border-r-[3px] bg-muted/30 shadow-sm text-primary/80 placeholder:text-muted-foreground cursor-not-allowed"
+                    type="text"
+                    value={envVars.POSTGRES_USER || ""}
+                    onChange={(e) =>
+                      setEnvVars({ ...envVars, POSTGRES_USER: e.target.value })
+                    }
+                    autoComplete="off"
+                    className="w-full h-9 px-3 text-xs rounded-md border border-primary/80 border-r-[3px] bg-card shadow-sm text-primary/80 focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
-                  <motion.button
-                    type="button"
-                    onClick={generatePassword}
-                    className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-md border border-primary/80 border-r-[3px] bg-green-500/80 shadow-sm transition-colors isolate"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    title="Generate Password"
-                  >
-                    <MdKey className="h-4 w-4 text-white" />
-                  </motion.button>
-                  {envVars.POSTGRES_PASSWORD && (
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-primary/80 mb-2">
+                    POSTGRES_PASSWORD *
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="password"
+                      value={envVars.POSTGRES_PASSWORD || ""}
+                      readOnly
+                      placeholder="Click generate button"
+                      autoComplete="new-password"
+                      className="flex-1 h-9 px-3 text-xs rounded-md border border-primary/80 border-r-[3px] bg-muted/30 shadow-sm text-primary/80 placeholder:text-muted-foreground cursor-not-allowed"
+                    />
                     <motion.button
                       type="button"
-                      onClick={() =>
-                        navigator.clipboard.writeText(envVars.POSTGRES_PASSWORD)
-                      }
-                      className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-md border border-primary/80 border-r-[3px] bg-blue-500/80 shadow-sm transition-colors isolate"
+                      onClick={generatePassword}
+                      className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-md border border-primary/80 border-r-[3px] bg-green-500/80 shadow-sm transition-colors isolate"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      title="Copy Password"
+                      title="Generate Password"
                     >
-                      <MdContentCopy className="h-4 w-4 text-white" />
+                      <MdKey className="h-4 w-4 text-white" />
                     </motion.button>
-                  )}
+                    {envVars.POSTGRES_PASSWORD && (
+                      <motion.button
+                        type="button"
+                        onClick={() =>
+                          navigator.clipboard.writeText(envVars.POSTGRES_PASSWORD || "")
+                        }
+                        className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-md border border-primary/80 border-r-[3px] bg-blue-500/80 shadow-sm transition-colors isolate"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        title="Copy Password"
+                      >
+                        <MdContentCopy className="h-4 w-4 text-white" />
+                      </motion.button>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-primary/80 mb-2">
+                    POSTGRES_DB
+                  </label>
+                  <input
+                    type="text"
+                    value={envVars.POSTGRES_DB || ""}
+                    onChange={(e) =>
+                      setEnvVars({ ...envVars, POSTGRES_DB: e.target.value })
+                    }
+                    autoComplete="off"
+                    className="w-full h-9 px-3 text-xs rounded-md border border-primary/80 border-r-[3px] bg-card shadow-sm text-primary/80 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  />
                 </div>
               </div>
-
-              <div>
-                <label className="block text-xs font-medium text-primary/80 mb-2">
-                  POSTGRES_DB
-                </label>
-                <input
-                  type="text"
-                  value={envVars.POSTGRES_DB}
-                  onChange={(e) =>
-                    setEnvVars({ ...envVars, POSTGRES_DB: e.target.value })
-                  }
-                  className="w-full h-9 px-3 text-xs rounded-md border border-primary/80 border-r-[3px] bg-card shadow-sm text-primary/80 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
+            ) : appId === "redis" ? (
+              <div className="grid grid-cols-1 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-primary/80 mb-2">
+                    REDIS_PASSWORD *
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="password"
+                      value={envVars.REDIS_PASSWORD || ""}
+                      readOnly
+                      placeholder="Click generate button"
+                      autoComplete="new-password"
+                      className="flex-1 h-9 px-3 text-xs rounded-md border border-primary/80 border-r-[3px] bg-muted/30 shadow-sm text-primary/80 placeholder:text-muted-foreground cursor-not-allowed"
+                    />
+                    <motion.button
+                      type="button"
+                      onClick={generatePassword}
+                      className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-md border border-primary/80 border-r-[3px] bg-green-500/80 shadow-sm transition-colors isolate"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      title="Generate Password"
+                    >
+                      <MdKey className="h-4 w-4 text-white" />
+                    </motion.button>
+                    {envVars.REDIS_PASSWORD && (
+                      <motion.button
+                        type="button"
+                        onClick={() =>
+                          navigator.clipboard.writeText(envVars.REDIS_PASSWORD || "")
+                        }
+                        className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-md border border-primary/80 border-r-[3px] bg-blue-500/80 shadow-sm transition-colors isolate"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        title="Copy Password"
+                      >
+                        <MdContentCopy className="h-4 w-4 text-white" />
+                      </motion.button>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : null}
           </div>
         </div>
 
@@ -428,7 +521,7 @@ export default function DeployAppPage() {
 
               <div>
                 <span className="text-muted-foreground">Port:</span>
-                <p className="font-mono text-primary/80 mt-1">{port}:5432</p>
+                <p className="font-mono text-primary/80 mt-1">{port}:{currentApp.internalPort}</p>
               </div>
 
               <div>
@@ -479,12 +572,17 @@ export default function DeployAppPage() {
           {/* Deploy Button */}
           <motion.button
             onClick={handleDeploy}
-            disabled={!selectedTag || !envVars.POSTGRES_PASSWORD || deploying}
+            disabled={
+              !selectedTag ||
+              (appId === "postgres" && !envVars.POSTGRES_PASSWORD) ||
+              (appId === "redis" && !envVars.REDIS_PASSWORD) ||
+              deploying
+            }
             className="relative flex h-12 w-full items-center justify-center overflow-hidden rounded-md border border-primary/80 border-r-[3px] border-b-[3px] bg-primary/80 shadow-sm transition-colors isolate font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            {deploying ? "Deploying..." : "Deploy PostgreSQL"}
+            {deploying ? "Deploying..." : `Deploy ${currentApp.name}`}
           </motion.button>
 
           {/* Deployment Result Dialog */}
@@ -496,7 +594,7 @@ export default function DeployAppPage() {
                   Deployment Successful!
                 </DialogTitle>
                 <DialogDescription>
-                  Your PostgreSQL database has been deployed successfully. Here are your connection details.
+                  Your {currentApp.name} {appId === "postgres" ? "database" : "cache"} has been deployed successfully. Here are your connection details.
                 </DialogDescription>
               </DialogHeader>
 
@@ -541,31 +639,37 @@ export default function DeployAppPage() {
               {/* Credentials */}
               {deploymentResult.credentials && (
                 <div className="rounded-md border border-primary/80 border-r-[3px] border-b-[3px] bg-card shadow-sm p-4">
-                  <h3 className="text-sm font-semibold text-primary/80 mb-3">Database Credentials</h3>
+                  <h3 className="text-sm font-semibold text-primary/80 mb-3">
+                    {appId === "postgres" ? "Database" : "Cache"} Credentials
+                  </h3>
 
                   <div className="space-y-2">
-                    {/* User */}
-                    <div>
-                      <label className="block text-[10px] text-muted-foreground mb-1">Username</label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={deploymentResult.credentials.user}
-                          readOnly
-                          className="flex-1 px-3 py-1.5 text-xs font-mono rounded-md border border-primary/80 bg-muted/30 text-primary/80"
-                        />
-                        <motion.button
-                          onClick={() => copyToClipboard(deploymentResult.credentials!.user, "Username")}
-                          className="relative flex h-7 w-7 items-center justify-center overflow-hidden rounded-md border border-primary/80 border-r-[3px] bg-blue-500/80 shadow-sm transition-colors isolate"
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          <MdContentCopy className="h-3 w-3 text-white" />
-                        </motion.button>
-                      </div>
-                    </div>
+                    {/* PostgreSQL: User, Password, Database */}
+                    {appId === "postgres" && deploymentResult.credentials.user && (
+                      <>
+                        <div>
+                          <label className="block text-[10px] text-muted-foreground mb-1">Username</label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={deploymentResult.credentials.user}
+                              readOnly
+                              className="flex-1 px-3 py-1.5 text-xs font-mono rounded-md border border-primary/80 bg-muted/30 text-primary/80"
+                            />
+                            <motion.button
+                              onClick={() => copyToClipboard(deploymentResult.credentials!.user || "", "Username")}
+                              className="relative flex h-7 w-7 items-center justify-center overflow-hidden rounded-md border border-primary/80 border-r-[3px] bg-blue-500/80 shadow-sm transition-colors isolate"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              <MdContentCopy className="h-3 w-3 text-white" />
+                            </motion.button>
+                          </div>
+                        </div>
+                      </>
+                    )}
 
-                    {/* Password */}
+                    {/* Password (for both PostgreSQL and Redis) */}
                     <div>
                       <label className="block text-[10px] text-muted-foreground mb-1">Password</label>
                       <div className="flex items-center gap-2">
@@ -586,26 +690,27 @@ export default function DeployAppPage() {
                       </div>
                     </div>
 
-                    {/* Database */}
-                    <div>
-                      <label className="block text-[10px] text-muted-foreground mb-1">Database</label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={deploymentResult.credentials.database}
-                          readOnly
-                          className="flex-1 px-3 py-1.5 text-xs font-mono rounded-md border border-primary/80 bg-muted/30 text-primary/80"
-                        />
-                        <motion.button
-                          onClick={() => copyToClipboard(deploymentResult.credentials!.database, "Database")}
-                          className="relative flex h-7 w-7 items-center justify-center overflow-hidden rounded-md border border-primary/80 border-r-[3px] bg-blue-500/80 shadow-sm transition-colors isolate"
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          <MdContentCopy className="h-3 w-3 text-white" />
-                        </motion.button>
+                    {appId === "postgres" && deploymentResult.credentials.database && (
+                      <div>
+                        <label className="block text-[10px] text-muted-foreground mb-1">Database</label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={deploymentResult.credentials.database}
+                            readOnly
+                            className="flex-1 px-3 py-1.5 text-xs font-mono rounded-md border border-primary/80 bg-muted/30 text-primary/80"
+                          />
+                          <motion.button
+                            onClick={() => copyToClipboard(deploymentResult.credentials!.database || "", "Database")}
+                            className="relative flex h-7 w-7 items-center justify-center overflow-hidden rounded-md border border-primary/80 border-r-[3px] bg-blue-500/80 shadow-sm transition-colors isolate"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <MdContentCopy className="h-3 w-3 text-white" />
+                          </motion.button>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
 
                   {/* Connection String */}
@@ -613,11 +718,16 @@ export default function DeployAppPage() {
                     <label className="block text-[10px] text-muted-foreground mb-1">Connection String (URL Encoded)</label>
                     <div className="flex items-start gap-2">
                       <code className="flex-1 px-3 py-2 text-[10px] font-mono rounded-md border border-primary/80 bg-muted/30 text-primary/80 break-all">
-                        postgresql://{deploymentResult.credentials.user}:{urlEncodePassword(deploymentResult.credentials.password)}@{getHostFromUrl(deploymentResult.deployment.externalUrl)}:{deploymentResult.deployment.nodePort}/{deploymentResult.credentials.database}
+                        {appId === "postgres"
+                          ? `postgresql://${deploymentResult.credentials.user}:${urlEncodePassword(deploymentResult.credentials.password)}@${getHostFromUrl(deploymentResult.deployment.externalUrl)}:${deploymentResult.deployment.nodePort}/${deploymentResult.credentials.database}`
+                          : `redis://:${urlEncodePassword(deploymentResult.credentials.password)}@${getHostFromUrl(deploymentResult.deployment.externalUrl)}:${deploymentResult.deployment.nodePort}`
+                        }
                       </code>
                       <motion.button
                         onClick={() => copyToClipboard(
-                          `postgresql://${deploymentResult.credentials!.user}:${urlEncodePassword(deploymentResult.credentials!.password)}@${getHostFromUrl(deploymentResult.deployment!.externalUrl)}:${deploymentResult.deployment!.nodePort}/${deploymentResult.credentials!.database}`,
+                          appId === "postgres"
+                            ? `postgresql://${deploymentResult.credentials!.user}:${urlEncodePassword(deploymentResult.credentials!.password)}@${getHostFromUrl(deploymentResult.deployment!.externalUrl)}:${deploymentResult.deployment!.nodePort}/${deploymentResult.credentials!.database}`
+                            : `redis://:${urlEncodePassword(deploymentResult.credentials!.password)}@${getHostFromUrl(deploymentResult.deployment!.externalUrl)}:${deploymentResult.deployment!.nodePort}`,
                           "Connection String"
                         )}
                         className="relative flex h-7 w-7 items-center justify-center overflow-hidden rounded-md border border-primary/80 border-r-[3px] bg-blue-500/80 shadow-sm transition-colors isolate"
@@ -629,17 +739,24 @@ export default function DeployAppPage() {
                     </div>
                   </div>
 
-                  {/* PSQL Command */}
+                  {/* CLI Command */}
                   <div className="mt-4 pt-4 border-t border-primary/20">
-                    <label className="block text-[10px] text-muted-foreground mb-1">PSQL Command</label>
+                    <label className="block text-[10px] text-muted-foreground mb-1">
+                      {appId === "postgres" ? "PSQL Command" : "Redis CLI Command"}
+                    </label>
                     <div className="flex items-start gap-2">
                       <code className="flex-1 px-3 py-2 text-[10px] font-mono rounded-md border border-primary/80 bg-muted/30 text-primary/80 break-all">
-                        PGPASSWORD='{deploymentResult.credentials.password}' psql -h {getHostFromUrl(deploymentResult.deployment.externalUrl)} -p {deploymentResult.deployment.nodePort} -U {deploymentResult.credentials.user} -d {deploymentResult.credentials.database}
+                        {appId === "postgres"
+                          ? `PGPASSWORD='${deploymentResult.credentials.password}' psql -h ${getHostFromUrl(deploymentResult.deployment.externalUrl)} -p ${deploymentResult.deployment.nodePort} -U ${deploymentResult.credentials.user} -d ${deploymentResult.credentials.database}`
+                          : `redis-cli -h ${getHostFromUrl(deploymentResult.deployment.externalUrl)} -p ${deploymentResult.deployment.nodePort} -a '${deploymentResult.credentials.password}' ping`
+                        }
                       </code>
                       <motion.button
                         onClick={() => copyToClipboard(
-                          `PGPASSWORD='${deploymentResult.credentials!.password}' psql -h ${getHostFromUrl(deploymentResult.deployment!.externalUrl)} -p ${deploymentResult.deployment!.nodePort} -U ${deploymentResult.credentials!.user} -d ${deploymentResult.credentials!.database}`,
-                          "PSQL Command"
+                          appId === "postgres"
+                            ? `PGPASSWORD='${deploymentResult.credentials!.password}' psql -h ${getHostFromUrl(deploymentResult.deployment!.externalUrl)} -p ${deploymentResult.deployment!.nodePort} -U ${deploymentResult.credentials!.user} -d ${deploymentResult.credentials!.database}`
+                            : `redis-cli -h ${getHostFromUrl(deploymentResult.deployment!.externalUrl)} -p ${deploymentResult.deployment!.nodePort} -a '${deploymentResult.credentials!.password}' ping`,
+                          appId === "postgres" ? "PSQL Command" : "Redis CLI Command"
                         )}
                         className="relative flex h-7 w-7 items-center justify-center overflow-hidden rounded-md border border-primary/80 border-r-[3px] bg-blue-500/80 shadow-sm transition-colors isolate"
                         whileHover={{ scale: 1.05 }}
