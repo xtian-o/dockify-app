@@ -85,7 +85,7 @@ export default async function Home() {
       <main className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">🚀 Dockify App</h1>
-          <p className="text-gray-400">Next.js 16 + Bun + Drizzle ORM + Redis</p>
+          <p className="text-gray-400">Next.js 16 + Bun + Drizzle ORM + Redis + PgBouncer</p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
