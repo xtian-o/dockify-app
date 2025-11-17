@@ -11,31 +11,19 @@ async function testConnections() {
 
   // Test PostgreSQL via PgBouncer
   try {
-    // Create table if not exists
-    await db.execute(sql`
-      CREATE TABLE IF NOT EXISTS health_checks (
-        id SERIAL PRIMARY KEY,
-        message TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT NOW() NOT NULL
-      )
-    `);
+    // Simple SELECT query to test connection
+    const result = await db.execute(sql`SELECT 1 as test, version() as pg_version`);
 
-    // Insert test record
-    const [newRecord] = await db
-      .insert(healthChecks)
-      .values({ message: 'Test from Next.js' })
-      .returning();
-
-    // Query back
-    const records = await db.select().from(healthChecks).limit(5);
+    const timestamp = new Date().toISOString();
 
     results.postgres = {
       status: 'success',
       message: '✅ PostgreSQL connected via PgBouncer',
       details: {
-        latestRecord: newRecord,
-        totalRecords: records.length,
-        recentRecords: records,
+        testQuery: 'SELECT 1',
+        version: result.rows[0]?.pg_version?.split(' ').slice(0, 2).join(' ') || 'PostgreSQL 18',
+        timestamp,
+        connectionPool: 'PgBouncer (transaction mode)',
       },
     };
   } catch (error) {
@@ -48,27 +36,26 @@ async function testConnections() {
 
   // Test Redis
   try {
-    const timestamp = Date.now();
-    const testKey = `health:${timestamp}`;
+    // Simple PING test
+    const ping = await Promise.race([
+      redis.ping(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Redis timeout')), 5000))
+    ]);
 
-    // Set a test value
-    await redis.set(testKey, JSON.stringify({ test: true, timestamp }), 'EX', 60);
+    // Get basic info
+    const info = await redis.info('server');
+    const redisVersion = info.match(/redis_version:([^\r\n]+)/)?.[1] || 'Unknown';
 
-    // Get it back
-    const value = await redis.get(testKey);
-    const parsed = value ? JSON.parse(value) : null;
-
-    // Get Redis info
-    const dbSize = await redis.dbsize();
-    const ping = await redis.ping();
+    const timestamp = new Date().toISOString();
 
     results.redis = {
       status: 'success',
       message: '✅ Redis connected',
       details: {
         ping,
-        dbSize,
-        testValue: parsed,
+        version: redisVersion,
+        timestamp,
+        status: 'In-memory cache ready',
       },
     };
   } catch (error) {
