@@ -57,9 +57,10 @@ jobs:
 
       - name: Update deployment with new image digest
         run: |
-          # Update deployment manifest with commit SHA annotation
-          # This triggers ArgoCD to detect change and sync automatically
+          # Update deployment manifest with commit SHA annotation and env var
+          # This triggers ArgoCD to detect change and rolling update
           sed -i "s/commit-sha: \".*\"/commit-sha: \"${{ github.sha }}\"/g" nextjs/deployment.yaml
+          sed -i "s/value: \"initial\"  # Updated by GitHub Actions to force pod restart/value: \"${{ github.sha }}\"  # Updated by GitHub Actions to force pod restart/g" nextjs/deployment.yaml
           echo "✅ Updated deployment manifest with commit SHA: ${{ github.sha }}"
 
       - name: Commit and push deployment update
