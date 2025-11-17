@@ -13,6 +13,7 @@ function getDb() {
 
     try {
       // Configure postgres client for PgBouncer
+      // Fix for postgres-js URL parsing issue - add explicit onparameter callback
       const client = postgres(connectionString, {
         prepare: false,
         max: 1, // Important for PgBouncer transaction mode
@@ -20,6 +21,9 @@ function getDb() {
         connect_timeout: 10,
         ssl: false, // PgBouncer doesn't require SSL internally
         onnotice: () => {}, // Suppress notices
+        onparameter: () => {}, // Fix for auth parsing bug
+        fetch_types: false, // Disable type fetching to avoid connection issues
+        debug: false,
       });
 
       dbInstance = drizzle(client, { schema });

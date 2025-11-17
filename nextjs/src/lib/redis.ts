@@ -10,8 +10,8 @@ function getRedisClient() {
 
     redisClient = new Redis(redisUrl, {
       maxRetriesPerRequest: 3,
-      enableReadyCheck: false,
-      lazyConnect: true, // Lazy connect - only when needed
+      enableReadyCheck: true,
+      lazyConnect: false, // Connect immediately to avoid race conditions
       connectTimeout: 10000,
       retryStrategy(times) {
         console.log(`[Redis] Retry attempt ${times}/3`);
@@ -22,6 +22,8 @@ function getRedisClient() {
         const delay = Math.min(times * 50, 2000);
         return delay;
       },
+      // Keep connection alive
+      keepAlive: 30000,
     });
 
     redisClient.on('connect', () => {
@@ -38,6 +40,10 @@ function getRedisClient() {
 
     redisClient.on('close', () => {
       console.log('[Redis] Connection closed');
+    });
+
+    redisClient.on('reconnecting', () => {
+      console.log('[Redis] Reconnecting...');
     });
   }
 
