@@ -22,11 +22,11 @@ spec:
         app: nextjs
         version: "16.0.3"
       annotations:
-        commit-sha: "021580c0ae52187bb9f5ef3097430a206d017f87"  # Updated by GitHub Actions on each push
+        commit-sha: "7a059546a777298a79ebef0da1de7ec946623029"  # Updated by GitHub Actions on each push
     spec:
       containers:
       - name: nextjs
-        image: ghcr.io/xtian-o/dockify-app/nextjs:main-021580c
+        image: ghcr.io/xtian-o/dockify-app/nextjs:main-7a05954
         imagePullPolicy: Always
         ports:
         - name: http
@@ -40,7 +40,7 @@ spec:
         - name: HOSTNAME
           value: "0.0.0.0"
         - name: GIT_COMMIT_SHA
-          value: "021580c0ae52187bb9f5ef3097430a206d017f87"  # Updated by GitHub Actions to force pod restart
+          value: "7a059546a777298a79ebef0da1de7ec946623029"  # Updated by GitHub Actions to force pod restart
         # Database connection from Kubernetes Secret
         - name: DATABASE_URL
           valueFrom:
