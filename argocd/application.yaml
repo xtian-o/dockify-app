@@ -32,6 +32,9 @@ spec:
       - CreateNamespace=true
       - PrunePropagationPolicy=foreground
       - PruneLast=true
+    managedNamespaceMetadata:
+      labels:
+        argocd.argoproj.io/instance: dockify-app
     retry:
       limit: 5
       backoff:
@@ -40,7 +43,12 @@ spec:
         maxDuration: 3m
 
   # Health assessment
-  ignoreDifferences: []
+  ignoreDifferences:
+  - group: ""
+    kind: Secret
+    name: wildcard-dockify-cloud-tls
+    jsonPointers:
+    - /data
 
   # Revision history limit
   revisionHistoryLimit: 10
