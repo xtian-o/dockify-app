@@ -4,12 +4,10 @@ metadata:
   name: nextjs-binding
   namespace: dockify-app
 subjects:
-- kind: Service
-  name: nextjs-service
-  spec:
-    fqdn: main.dockify.app
-    noTlsVerify: false
-    target: http://nextjs-service.dockify-app.svc.cluster.local:3000
+- name: nextjs-service
+spec:
+  fqdn: main.dockify.app
+  noTlsVerify: false
 tunnelRef:
   kind: ClusterTunnel
   name: main-dockify-app-tunnel
