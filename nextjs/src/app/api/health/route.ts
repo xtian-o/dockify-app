@@ -6,6 +6,8 @@ export async function GET() {
       status: 'healthy',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
+      version: process.env.GIT_COMMIT_SHA || 'unknown',
+      automated: true, // Test automatizare CI/CD
     },
     { status: 200 }
   );
