@@ -22,7 +22,7 @@ spec:
         app: nextjs
         version: "16.0.3"
       annotations:
-        commit-sha: "de384081a14ead73e334e0af26d94da41f8beb1f"  # Updated by GitHub Actions on each push
+        commit-sha: "2af57b4e311013306163379222cccfe6c0dc425a"  # Updated by GitHub Actions on each push
     spec:
       containers:
       - name: nextjs
