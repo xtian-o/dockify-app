@@ -8,8 +8,8 @@ WORKDIR /app
 # Copy package files
 COPY package.json bun.lock ./
 
-# Install dependencies
-RUN bun install --frozen-lockfile --production=false
+# Install dependencies (including devDependencies for build)
+RUN bun install --frozen-lockfile
 
 # Stage 2: Builder
 FROM oven/bun:1.1.45-alpine AS builder
