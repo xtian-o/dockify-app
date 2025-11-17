@@ -56,3 +56,16 @@ jobs:
 
       - name: Image digest
         run: echo "Image pushed with digest ${{ steps.build.outputs.digest }}"
+
+      - name: Trigger deployment restart
+        env:
+          KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG }}
+        run: |
+          if [ -n "$KUBECONFIG_CONTENT" ]; then
+            echo "$KUBECONFIG_CONTENT" > /tmp/kubeconfig
+            export KUBECONFIG=/tmp/kubeconfig
+            kubectl rollout restart deployment/nextjs -n dockify-app
+            echo "✅ Deployment restarted to pull new image"
+          else
+            echo "⚠️ KUBECONFIG secret not set - manual restart required"
+          fi
