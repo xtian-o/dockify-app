@@ -54,13 +54,28 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           no-cache: true  # Force rebuild without cache to ensure all changes are included
 
-      - name: Update deployment with new image digest
+      - name: Update deployment with new image tag and SHA
         run: |
-          # Update deployment manifest with commit SHA annotation and env var
-          # This triggers ArgoCD to detect change and rolling update
+          # Get short SHA for image tag
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+
+          # Update deployment manifest with:
+          # 1. Docker image tag to use SHA-based version (ensures new image is always pulled)
+          # 2. Commit SHA annotation (for tracking)
+          # 3. GIT_COMMIT_SHA env var (for runtime info)
+
+          # Update image tag with SHA-based version
+          sed -i "s|image: ghcr.io/${{ github.repository }}/nextjs:.*|image: ghcr.io/${{ github.repository }}/nextjs:main-${SHORT_SHA}|g" nextjs/deployment.yaml
+
+          # Update commit-sha annotation
           sed -i "s/commit-sha: \".*\"/commit-sha: \"${{ github.sha }}\"/g" nextjs/deployment.yaml
-          sed -i "s/value: \"initial\"  # Updated by GitHub Actions to force pod restart/value: \"${{ github.sha }}\"  # Updated by GitHub Actions to force pod restart/g" nextjs/deployment.yaml
-          echo "✅ Updated deployment manifest with commit SHA: ${{ github.sha }}"
+
+          # Update GIT_COMMIT_SHA env var
+          sed -i "s/value: \".*\"  # Updated by GitHub Actions to force pod restart/value: \"${{ github.sha }}\"  # Updated by GitHub Actions to force pod restart/g" nextjs/deployment.yaml
+
+          echo "✅ Updated deployment manifest:"
+          echo "   - Image tag: main-${SHORT_SHA}"
+          echo "   - Commit SHA: ${{ github.sha }}"
 
       - name: Commit and push deployment update
         run: |

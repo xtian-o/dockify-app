@@ -14,8 +14,6 @@ function getDb() {
     // Only create connection at runtime, not at build time
     const connectionString = process.env.DATABASE_URL || 'postgresql://localhost:5432/postgres';
 
-    console.log('[DB] Initializing connection to:', connectionString.replace(/:[^:@]+@/, ':****@'));
-
     try {
       // Configure postgres client for PgBouncer
       // Fix for postgres-js URL parsing issue - add explicit onparameter callback
@@ -32,7 +30,6 @@ function getDb() {
       });
 
       dbInstance = drizzle(client, { schema });
-      console.log('[DB] Connection initialized successfully');
     } catch (error) {
       console.error('[DB] Failed to initialize connection:', error);
       throw error;
