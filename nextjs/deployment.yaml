@@ -22,12 +22,12 @@ spec:
         app: nextjs
         version: "16.0.3"
       annotations:
-        commit-sha: "210880c5c55e4161ec2aba9e4f2bcd7c1514866b"  # Updated by GitHub Actions on each push
+        commit-sha: "3a56cb43852a0c40474864bfbc43f896529211d5"  # Updated by GitHub Actions on each push
     spec:
       serviceAccountName: nextjs-deployer
       containers:
       - name: nextjs
-        image: ghcr.io/xtian-o/dockify-app/nextjs:main-210880c
+        image: ghcr.io/xtian-o/dockify-app/nextjs:main-3a56cb4
         imagePullPolicy: Always
         ports:
         - name: http
@@ -41,7 +41,7 @@ spec:
         - name: HOSTNAME
           value: "0.0.0.0"
         - name: GIT_COMMIT_SHA
-          value: "210880c5c55e4161ec2aba9e4f2bcd7c1514866b"  # Updated by GitHub Actions to force pod restart
+          value: "3a56cb43852a0c40474864bfbc43f896529211d5"  # Updated by GitHub Actions to force pod restart
         # Disable TLS verification for in-cluster K8s API calls
         - name: NODE_TLS_REJECT_UNAUTHORIZED
           value: "0"
