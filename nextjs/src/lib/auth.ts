@@ -43,11 +43,6 @@ declare module "next-auth" {
 }
 
 /**
- * Resend Client Instance
- */
-const resend = new ResendClient(process.env.AUTH_RESEND_KEY!);
-
-/**
  * Auth.js Configuration
  */
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -82,6 +77,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token,
         request,
       }) => {
+        // Initialize Resend client (lazy initialization to avoid build-time errors)
+        const resend = new ResendClient(process.env.AUTH_RESEND_KEY!);
+
         // Extract host from request
         const host = request?.headers?.get("host") || "main.dockify.app";
         try {
