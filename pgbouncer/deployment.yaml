@@ -24,28 +24,45 @@ spec:
     spec:
       containers:
       - name: pgbouncer
-        image: pgbouncer/pgbouncer:latest
+        image: bitnami/pgbouncer:latest
         imagePullPolicy: IfNotPresent
         ports:
         - name: pgbouncer
           containerPort: 6432
           protocol: TCP
         env:
-        - name: POSTGRES_USER
-          valueFrom:
-            secretKeyRef:
-              name: postgresql-secret
-              key: POSTGRES_USER
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: postgresql-secret
-              key: POSTGRES_PASSWORD
-        - name: POSTGRES_DB
+        - name: POSTGRESQL_HOST
+          value: "postgresql-service.dockify-app.svc.cluster.local"
+        - name: POSTGRESQL_PORT
+          value: "5432"
+        - name: POSTGRESQL_DATABASE
           valueFrom:
             secretKeyRef:
               name: postgresql-secret
               key: POSTGRES_DB
+        - name: POSTGRESQL_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secret
+              key: POSTGRES_USER
+        - name: POSTGRESQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secret
+              key: POSTGRES_PASSWORD
+        - name: PGBOUNCER_PORT
+          value: "6432"
+        - name: PGBOUNCER_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secret
+              key: POSTGRES_DB
+        - name: PGBOUNCER_POOL_MODE
+          value: "transaction"
+        - name: PGBOUNCER_MAX_CLIENT_CONN
+          value: "1000"
+        - name: PGBOUNCER_DEFAULT_POOL_SIZE
+          value: "25"
         resources:
           requests:
             cpu: "1000m"
@@ -53,13 +70,7 @@ spec:
           limits:
             cpu: "2000m"
             memory: "1Gi"
-        volumeMounts:
-        - name: pgbouncer-config
-          mountPath: /etc/pgbouncer/pgbouncer.ini
-          subPath: pgbouncer.ini
-        - name: pgbouncer-config
-          mountPath: /etc/pgbouncer/userlist.txt
-          subPath: userlist.txt
+        volumeMounts: []
         livenessProbe:
           tcpSocket:
             port: 6432
@@ -74,7 +85,4 @@ spec:
           periodSeconds: 5
           timeoutSeconds: 3
           failureThreshold: 3
-      volumes:
-      - name: pgbouncer-config
-        configMap:
-          name: pgbouncer-config
+      volumes: []
