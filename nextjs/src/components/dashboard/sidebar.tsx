@@ -5,11 +5,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
-  MdApps,
   MdChevronRight,
   MdDashboard,
   MdNewReleases,
+  MdStorefront,
 } from "react-icons/md";
+import { FaGithub } from "react-icons/fa";
 import Logo from "@/components/common/logo";
 import { UserMenu } from "@/components/dashboard/_components";
 import { TooltipProvider } from "@/components/dashboard/_components/tooltip-context";
@@ -22,12 +23,21 @@ const navigation = [
     href: "/dashboard",
     icon: MdDashboard,
     adminOnly: false,
+    iconSize: "h-4 w-4",
   },
   {
     name: "App Catalog",
     href: "/dashboard/apps",
-    icon: MdApps,
+    icon: MdStorefront,
     adminOnly: false,
+    iconSize: "h-4 w-4",
+  },
+  {
+    name: "Git Connect",
+    href: "/dashboard/git-connect",
+    icon: FaGithub,
+    adminOnly: false,
+    iconSize: "h-4 w-4",
   },
 ];
 
@@ -96,7 +106,7 @@ function NavigationItem({
             }}
             transition={{ duration: 0.5, ease: "easeOut" }}
           >
-            <Icon className="h-4 w-4 text-white dark:text-black" />
+            <Icon className={cn(item.iconSize || "h-4 w-4", "text-white dark:text-black")} />
           </motion.div>
         </span>
 
