@@ -476,7 +476,7 @@ export default function GetStartedPage() {
                   required
                   className="mt-0.5"
                   checked={termsAccepted}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={(checked: boolean) =>
                     setTermsAccepted(checked === true)
                   }
                 />

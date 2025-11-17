@@ -53,6 +53,7 @@ const resend = new ResendClient(process.env.AUTH_RESEND_KEY!);
 export const { handlers, auth, signIn, signOut } = NextAuth({
   // ==================== ADAPTER ====================
   // Using Drizzle Adapter for database sessions
+  // @ts-expect-error - Type mismatch between next-auth v5 beta and drizzle-adapter
   adapter: DrizzleAdapter(db, {
     usersTable: users,
     accountsTable: accounts,
