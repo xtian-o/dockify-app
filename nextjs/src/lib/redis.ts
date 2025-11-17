@@ -1,15 +1,15 @@
 import Redis from 'ioredis';
 
-const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-
 let redisClient: Redis | null = null;
 
 function getRedisClient() {
   if (!redisClient) {
+    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+
     redisClient = new Redis(redisUrl, {
       maxRetriesPerRequest: 3,
       enableReadyCheck: false,
-      lazyConnect: true, // Changed to lazy connect
+      lazyConnect: true, // Lazy connect - only when needed
       connectTimeout: 10000,
       retryStrategy(times) {
         if (times > 3) return null;
@@ -19,7 +19,7 @@ function getRedisClient() {
     });
 
     redisClient.on('connect', () => {
-      console.log('✅ Redis connected');
+      console.log('✅ Redis connected to:', redisUrl);
     });
 
     redisClient.on('error', (err) => {
@@ -30,6 +30,11 @@ function getRedisClient() {
   return redisClient;
 }
 
-export const redis = getRedisClient();
+// Export a lazy getter function instead of creating the client immediately
+export const redis = new Proxy({} as Redis, {
+  get(target, prop) {
+    return getRedisClient()[prop as keyof Redis];
+  }
+});
 
 export default redis;
