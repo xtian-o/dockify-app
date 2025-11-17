@@ -39,6 +39,11 @@ async function testConnections() {
 
   // Test Redis
   try {
+    // Connect if using lazyConnect
+    if (redis.status !== 'ready') {
+      await redis.connect();
+    }
+
     // Simple PING test with timeout
     const ping = await Promise.race([
       redis.ping(),
