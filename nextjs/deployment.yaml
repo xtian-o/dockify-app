@@ -70,6 +70,28 @@ spec:
             secretKeyRef:
               name: dockify-app-secrets
               key: AUTH_RESEND_KEY
+        # ArgoCD integration
+        - name: ARGOCD_URL
+          valueFrom:
+            secretKeyRef:
+              name: dockify-app-secrets
+              key: ARGOCD_URL
+        - name: ARGOCD_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: dockify-app-secrets
+              key: ARGOCD_TOKEN
+        # Kubernetes configuration
+        - name: EXTERNAL_HOST
+          valueFrom:
+            secretKeyRef:
+              name: dockify-app-secrets
+              key: EXTERNAL_HOST
+        - name: KUBERNETES_NODE_IP
+          valueFrom:
+            secretKeyRef:
+              name: dockify-app-secrets
+              key: KUBERNETES_NODE_IP
         resources:
           requests:
             cpu: "500m"
