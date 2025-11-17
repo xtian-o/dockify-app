@@ -17,12 +17,9 @@ function getKubeConfig() {
       // If not found, try in-cluster config (works in production pods)
       kc.loadFromCluster();
 
-      // Disable TLS verification for in-cluster connections
+      // For in-cluster connections, disable TLS certificate verification
       // This is safe because we're within the cluster's internal network
-      const cluster = kc.getCurrentCluster();
-      if (cluster) {
-        cluster.skipTLSVerify = true;
-      }
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
     } catch (clusterError) {
       console.error("Failed to load kubeconfig:", error);
       console.error("Failed to load in-cluster config:", clusterError);
