@@ -39,11 +39,16 @@ async function testConnections() {
 
   // Test Redis
   try {
+    // Connect if not already connected
+    if (redis.status !== 'ready') {
+      await redis.connect();
+    }
+
     // Simple PING test
     const ping = await Promise.race([
       redis.ping(),
       new Promise((_, reject) => setTimeout(() => reject(new Error('Redis timeout')), 5000))
-    ]);
+    ]) as string;
 
     // Get basic info
     const info = await redis.info('server');
