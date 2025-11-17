@@ -46,26 +46,26 @@ async function testConnections() {
     ]) as string;
 
     // Validate ping response
-    if (!ping || ping === 'PONG') {
-      // Get basic info
-      const info = await redis.info('server');
-      const redisVersion = (typeof info === 'string' && info.match(/redis_version:([^\r\n]+)/)?.[1]) || 'Unknown';
-
-      const timestamp = new Date().toISOString();
-
-      results.redis = {
-        status: 'success',
-        message: '✅ Redis connected',
-        details: {
-          ping: ping || 'PONG',
-          version: redisVersion,
-          timestamp,
-          status: 'In-memory cache ready',
-        },
-      };
-    } else {
-      throw new Error('Invalid ping response');
+    if (!ping || (typeof ping === 'string' && ping.toUpperCase() !== 'PONG')) {
+      throw new Error(`Invalid ping response: ${ping}`);
     }
+
+    // Get basic info
+    const info = await redis.info('server');
+    const redisVersion = (typeof info === 'string' && info.match(/redis_version:([^\r\n]+)/)?.[1]) || 'Unknown';
+
+    const timestamp = new Date().toISOString();
+
+    results.redis = {
+      status: 'success',
+      message: '✅ Redis connected',
+      details: {
+        ping: typeof ping === 'string' ? ping : 'PONG',
+        version: redisVersion,
+        timestamp,
+        status: 'In-memory cache ready',
+      },
+    };
   } catch (error) {
     results.redis = {
       status: 'error',
