@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   MdCode,
@@ -78,6 +79,7 @@ const categories = [
 function AppCard({ app }: { app: (typeof apps)[0] }) {
   const [isHovered, setIsHovered] = useState(false);
   const Icon = app.icon;
+  const router = useRouter();
 
   return (
     <motion.div
@@ -145,6 +147,7 @@ function AppCard({ app }: { app: (typeof apps)[0] }) {
 
             {/* Deploy Button */}
             <motion.button
+              onClick={() => router.push(`/dashboard/apps/${app.id}/deploy`)}
               className="relative flex h-7 items-center overflow-hidden rounded-md border border-primary/80 border-r-[3px] bg-card shadow-sm transition-colors isolate px-3 text-xs font-medium text-primary/80"
               variants={{
                 rest: { scale: 1 },

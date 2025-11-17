@@ -9,6 +9,9 @@ import {
   MdDashboard,
   MdNewReleases,
   MdStorefront,
+  MdApps,
+  MdExpandMore,
+  MdExpandLess,
 } from "react-icons/md";
 import { FaGithub } from "react-icons/fa";
 import Logo from "@/components/common/logo";
@@ -31,6 +34,14 @@ const navigation = [
     icon: MdStorefront,
     adminOnly: false,
     iconSize: "h-4 w-4",
+    children: [
+      {
+        name: "My Apps",
+        href: "/dashboard/my-apps",
+        icon: MdApps,
+        iconSize: "h-4 w-4",
+      },
+    ],
   },
   {
     name: "Git Connect",
@@ -41,6 +52,12 @@ const navigation = [
   },
 ];
 
+// Type definitions for navigation items
+type NavigationItem = (typeof navigation)[number];
+type NavigationItemWithChildren = NavigationItem & { children: NonNullable<NavigationItem["children"]> };
+type ChildNavigationItem = NonNullable<NavigationItemWithChildren["children"]>[number];
+type NavigationItemType = NavigationItem | ChildNavigationItem;
+
 /**
  * Navigation Item Component
  *
@@ -50,28 +67,157 @@ function NavigationItem({
   item,
   isActive,
   collapsed = false,
+  onClick,
+}: {
+  item: NavigationItemType;
+  isActive: boolean;
+  collapsed?: boolean;
+  onClick?: () => void;
+}) {
+  const [isHovered, setIsHovered] = useState(false);
+  const Icon = item.icon;
+  const hasChildren = "children" in item && item.children && item.children.length > 0;
+
+  const content = (
+    <>
+      {/* Active State Background */}
+      {isActive && <div className="absolute inset-0 bg-primary/10" />}
+
+      {/* Background Overlay on Hover */}
+      <motion.div
+        className="absolute inset-0 bg-primary/5"
+        variants={{
+          rest: { opacity: 0 },
+          hover: { opacity: 1 },
+        }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+      />
+
+      {/* Icon Container */}
+      <span
+        className={cn(
+          "relative z-10 flex h-full shrink-0 items-center justify-center bg-primary/80",
+          collapsed ? "w-full" : "w-8",
+        )}
+      >
+        <motion.div
+          className="absolute inset-0 bg-primary/15"
+          variants={{
+            rest: { opacity: 0 },
+            hover: { opacity: 1 },
+          }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+        />
+        <motion.div
+          className="relative z-10"
+          variants={{
+            rest: { rotate: 0, scale: 1 },
+            hover: { rotate: 12, scale: 1.1 },
+          }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        >
+          <Icon className={cn(item.iconSize || "h-4 w-4", "text-white dark:text-black")} />
+        </motion.div>
+      </span>
+
+      {/* Label - Hidden when collapsed */}
+      {!collapsed && (
+        <>
+          <span className="relative z-10 flex-1 px-3 text-xs font-medium text-primary/80">
+            {item.name}
+          </span>
+
+          {/* Chevron */}
+          <div className="relative z-10 flex h-5 items-center border-l border-primary/80 pl-2.5 pr-2.5">
+            <MdChevronRight className="h-4 w-4 text-primary/80" />
+          </div>
+        </>
+      )}
+
+      {/* Shimmer Effect */}
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-0 z-50 transition-all duration-500 ease-out bg-gradient-to-r from-transparent via-primary/20 to-transparent",
+          isHovered
+            ? "translate-x-full opacity-100"
+            : "-translate-x-full opacity-0",
+        )}
+      />
+    </>
+  );
+
+  return (
+    <motion.div initial="rest" whileHover="hover" animate="rest">
+      {hasChildren || onClick ? (
+        <button
+          onClick={onClick}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          className={cn(
+            "relative flex h-9 w-full items-center overflow-hidden rounded-md border border-primary/80 bg-card shadow-sm transition-colors isolate group",
+            !collapsed && "border-r-[3px]",
+          )}
+          title={collapsed ? item.name : undefined}
+        >
+          {content}
+        </button>
+      ) : (
+        <Link
+          href={item.href}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          className={cn(
+            "relative flex h-9 w-full items-center overflow-hidden rounded-md border border-primary/80 bg-card shadow-sm transition-colors isolate group",
+            !collapsed && "border-r-[3px]",
+          )}
+          title={collapsed ? item.name : undefined}
+        >
+          {content}
+        </Link>
+      )}
+    </motion.div>
+  );
+}
+
+/**
+ * Navigation Item with Submenu
+ */
+function NavigationItemWithSubmenu({
+  item,
+  isActive,
+  collapsed = false,
+  pathname,
 }: {
   item: (typeof navigation)[0];
   isActive: boolean;
   collapsed?: boolean;
+  pathname: string;
 }) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const Icon = item.icon;
+  const hasChildren = item.children && item.children.length > 0;
+
+  // Auto-expand if a child is active
+  const hasActiveChild = item.children?.some((child) => pathname === child.href);
+  const shouldExpand = isExpanded || hasActiveChild;
 
   return (
-    <motion.div initial="rest" whileHover="hover" animate="rest">
-      <Link
-        href={item.href}
+    <div>
+      {/* Parent Item */}
+      <motion.div
+        initial="rest"
+        whileHover="hover"
+        animate="rest"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         className={cn(
           "relative flex h-9 w-full items-center overflow-hidden rounded-md border border-primary/80 bg-card shadow-sm transition-colors isolate group",
           !collapsed && "border-r-[3px]",
         )}
-        title={collapsed ? item.name : undefined}
       >
         {/* Active State Background */}
-        {isActive && <div className="absolute inset-0 bg-primary/10" />}
+        {(isActive || hasActiveChild) && <div className="absolute inset-0 bg-primary/10" />}
 
         {/* Background Overlay on Hover */}
         <motion.div
@@ -110,17 +256,33 @@ function NavigationItem({
           </motion.div>
         </span>
 
-        {/* Label - Hidden when collapsed */}
+        {/* Label and Chevron - Hidden when collapsed */}
         {!collapsed && (
           <>
-            <span className="relative z-10 flex-1 px-3 text-xs font-medium text-primary/80">
+            {/* Main clickable area - navigates to parent page */}
+            <Link
+              href={item.href}
+              className="relative z-10 flex-1 px-3 text-xs font-medium text-primary/80"
+            >
               {item.name}
-            </span>
+            </Link>
 
-            {/* Chevron */}
-            <div className="relative z-10 flex h-5 items-center border-l border-primary/80 pl-2.5 pr-2.5">
-              <MdChevronRight className="h-4 w-4 text-primary/80" />
-            </div>
+            {/* Expand/Collapse Button */}
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsExpanded(!isExpanded);
+              }}
+              className="relative z-10 flex h-full items-center border-l border-primary/80 pl-2.5 pr-2.5 hover:bg-primary/5 transition-colors"
+              aria-label={shouldExpand ? "Collapse menu" : "Expand menu"}
+            >
+              {shouldExpand ? (
+                <MdExpandLess className="h-4 w-4 text-primary/80" />
+              ) : (
+                <MdExpandMore className="h-4 w-4 text-primary/80" />
+              )}
+            </button>
           </>
         )}
 
@@ -133,8 +295,35 @@ function NavigationItem({
               : "-translate-x-full opacity-0",
           )}
         />
-      </Link>
-    </motion.div>
+      </motion.div>
+
+      {/* Submenu */}
+      {hasChildren && !collapsed && (
+        <motion.div
+          initial={false}
+          animate={{
+            height: shouldExpand ? "auto" : 0,
+            opacity: shouldExpand ? 1 : 0,
+          }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="overflow-hidden"
+        >
+          <div className="mt-2 ml-4 space-y-2 border-l-2 border-primary/20 pl-2">
+            {item.children?.map((child) => {
+              const isChildActive = pathname === child.href;
+              return (
+                <NavigationItem
+                  key={child.name}
+                  item={child}
+                  isActive={isChildActive}
+                  collapsed={false}
+                />
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
+    </div>
   );
 }
 
@@ -201,6 +390,19 @@ export function DashboardSidebar({ collapsed = false }: DashboardSidebarProps) {
           }
 
           const isActive = pathname === item.href;
+          const hasChildren = item.children && item.children.length > 0;
+
+          if (hasChildren) {
+            return (
+              <NavigationItemWithSubmenu
+                key={item.name}
+                item={item}
+                isActive={isActive}
+                collapsed={collapsed}
+                pathname={pathname}
+              />
+            );
+          }
 
           return (
             <NavigationItem
